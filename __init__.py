@@ -4,7 +4,7 @@ from .const import DOMAIN
 from homeassistant.const import Platform
 
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.CAMERA]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.CAMERA, Platform.BUTTON]
 
 async def async_setup(hass, config):
     """Set up the integration from YAML (not used, but required)."""
@@ -20,8 +20,9 @@ async def async_unload_entry(hass, entry):
     """Unload Intelbras 3542 MFW config entry."""
     unload_sensor_ok = await hass.config_entries.async_forward_entry_unload(entry, "sensor")
     unload_camera_ok = await hass.config_entries.async_forward_entry_unload(entry, "camera")
+    unload_button_ok = await hass.config_entries.async_forward_entry_unload(entry, "button")
 
-    if unload_sensor_ok and unload_camera_ok:
+    if unload_sensor_ok and unload_camera_ok and unload_button_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return True
