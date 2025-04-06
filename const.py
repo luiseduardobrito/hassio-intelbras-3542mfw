@@ -1,5 +1,5 @@
 # const.py
-DOMAIN = "intelbras_3542_mfw"
+DOMAIN = "intelbras_3542mfw"
 
 CONF_HOST = "host"
 CONF_USERNAME = "username"
