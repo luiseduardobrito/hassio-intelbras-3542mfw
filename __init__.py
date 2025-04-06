@@ -9,14 +9,10 @@ async def async_setup(hass, config):
 async def async_setup_entry(hass, entry):
     """Set up Intelbras 3542 MFW from a config entry."""
     hass.data.setdefault(DOMAIN, {})
-    # Forward the setup to both sensor and camera platforms
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(entry, "sensor")
-    )
-    hass.async_create_task(
-        hass.config_entries.async_forward_entry_setup(entry, "camera")
-    )
-    return True
+    # Forward the setup to both sensor and camera platforms and await their completion
+    result_sensor = await hass.config_entries.async_forward_entry_setup(entry, "sensor")
+    result_camera = await hass.config_entries.async_forward_entry_setup(entry, "camera")
+    return result_sensor and result_camera
 
 async def async_unload_entry(hass, entry):
     """Unload Intelbras 3542 MFW config entry."""
