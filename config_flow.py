@@ -7,7 +7,9 @@ from .const import DOMAIN, DEFAULT_HOST, CONF_HOST, CONF_USERNAME, CONF_PASSWORD
 
 _LOGGER = logging.getLogger(__name__)
 
-class MySensorConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+
+@config_entries.HANDLERS.register(DOMAIN)
+class IntelbrasConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for My Sensor integration."""
 
     VERSION = 1
