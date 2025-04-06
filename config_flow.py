@@ -57,4 +57,4 @@ def fetch_data(host, username, password):
     params = {}
     response = requests.get(host, auth=HTTPDigestAuth(username, password), params=params, timeout=10)
     response.raise_for_status()  # Raises an exception for HTTP errors
-    return response.json()
+    return response.text
