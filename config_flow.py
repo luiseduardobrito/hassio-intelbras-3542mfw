@@ -3,9 +3,11 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
 
+
 from .const import DOMAIN, DEFAULT_HOST, CONF_HOST, CONF_USERNAME, CONF_PASSWORD
 
 _LOGGER = logging.getLogger(__name__)
+_LOGGER.debug("Loading config_flow for %s", __name__)
 
 
 @config_entries.HANDLERS.register(DOMAIN)
