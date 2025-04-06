@@ -1,60 +1,73 @@
-"""Platform for Intelbras sensor integration."""
-from __future__ import annotations
-
 import logging
-import requests
+from datetime import timedelta
 
-from homeassistant.components.sensor import SensorEntity, SensorStateClass
-from homeassistant.const import CONF_HOST, CONF_USERNAME, CONF_PASSWORD
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+import requests
+from requests.auth import HTTPDigestAuth
+
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
+
+from .const import DOMAIN, CONF_HOST, CONF_USERNAME, CONF_PASSWORD, DEFAULT_HOST
 
 _LOGGER = logging.getLogger(__name__)
 
+# Define how often to poll the device
+SCAN_INTERVAL = timedelta(seconds=60)
 
-async def async_setup_entry(
-  hass: HomeAssistant, entry, async_add_entities: AddEntitiesCallback
-) -> None:
-  """Set up the Intelbras sensor from a config entry."""
-  async_add_entities([IntelbrasSensor(hass, entry)])
-
-
-class IntelbrasSensor(SensorEntity):
-  """Representation of a sensor that fetches data from the device using configuration entry info."""
-
-  _attr_name = "Intelbras Door Status"
-  _attr_native_unit_of_measurement = None  # No unit since the device returns a string.
-  _attr_device_class = None
-  _attr_state_class = SensorStateClass.MEASUREMENT
-
-  def __init__(self, hass: HomeAssistant, entry) -> None:
-    """Initialize the Intelbras sensor."""
-    self.hass = hass
-    self._host: str = entry.data[CONF_HOST]
-    self._username: str = entry.data[CONF_USERNAME]
-    self._password: str = entry.data[CONF_PASSWORD]
-    self._attr_native_value = None
-
-  async def async_update(self) -> None:
-    """Fetch new state data for the sensor."""
-    url = f"http://{self._host}/cgi-bin/accessControl.cgi?action=getDoorStatus&channel=1"
-    digest_auth = requests.auth.HTTPDigestAuth(self._username, self._password)
-
-    def get_status() -> str | None:
-      try:
+def fetch_door_status(host, username, password):
+    """Fetch door status from the Intelbras device using HTTP Digest Authentication."""
+    url = f"{host}/cgi-bin/accessControl.cgi?action=getDoorStatus&channel=1"
+    try:
         response = requests.get(
-          url, auth=digest_auth, stream=True, timeout=20, verify=False
+            url,
+            auth=HTTPDigestAuth(username, password),
+            stream=True,
+            timeout=20,
+            verify=False  # Set verify=True if you have valid SSL certificates
         )
         response.raise_for_status()
-        return response.text.strip()
-      except requests.RequestException as exc:
-        _LOGGER.error("Error fetching data from %s: %s", self._host, exc)
-        return None
+        return response.text.strip()  # Returns the door status as a string
+    except Exception as err:
+        _LOGGER.error("Error fetching door status from %s: %s", host, err)
+        raise
 
-    content = await self.hass.async_add_executor_job(get_status)
+async def async_setup_entry(hass, entry, async_add_entities):
+    """Set up the sensor platform from a config entry."""
+    host = entry.data.get(CONF_HOST, DEFAULT_HOST)
+    username = entry.data.get(CONF_USERNAME)
+    password = entry.data.get(CONF_PASSWORD)
 
-    if content and content.startswith("Info.status="):
-      self._attr_native_value = content.split("=", 1)[1]
-    else:
-      self._attr_native_value = None
+    coordinator = DataUpdateCoordinator(
+        hass,
+        _LOGGER,
+        name="Intelbras Door Status",
+        update_method=lambda: hass.async_add_executor_job(
+            fetch_door_status, host, username, password
+        ),
+        update_interval=SCAN_INTERVAL,
+    )
+
+    # Fetch initial data before adding entities.
+    await coordinator.async_config_entry_first_refresh()
+
+    async_add_entities([IntelbrasDoorStatusSensor(coordinator, host)], True)
+
+class IntelbrasDoorStatusSensor(CoordinatorEntity, SensorEntity):
+    """Representation of the Intelbras door status sensor."""
+
+    def __init__(self, coordinator, host):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_name = "Door Status"
+        self._attr_unique_id = f"{host}_door_status"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, host)},
+            "name": "Intelbras 3542 MFW",
+            "manufacturer": "Intelbras",
+        }
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        # The coordinator.data contains the door status string returned by the API.
+        return self.coordinator.data
