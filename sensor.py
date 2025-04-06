@@ -3,6 +3,7 @@ from datetime import timedelta
 
 import requests
 from requests.auth import HTTPDigestAuth
+import urllib3
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
@@ -11,19 +12,24 @@ from .const import DOMAIN, CONF_HOST, CONF_USERNAME, CONF_PASSWORD, DEFAULT_HOST
 
 _LOGGER = logging.getLogger(__name__)
 
+# Disable warnings for insecure SSL requests
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 # Define how often to poll the device
 SCAN_INTERVAL = timedelta(seconds=60)
+
 
 def fetch_door_status(host, username, password):
     """Fetch door status from the Intelbras device using HTTP Digest Authentication."""
     url = f"{host}/cgi-bin/accessControl.cgi?action=getDoorStatus&channel=1"
     try:
-        response = requests.get(
+        session = requests.Session()
+        session.verify = False  # Disable SSL certificate verification globally for this session
+        response = session.get(
             url,
             auth=HTTPDigestAuth(username, password),
             stream=True,
             timeout=20,
-            verify=False  # Set verify=True if you have valid SSL certificates
         )
         response.raise_for_status()
         text = response.text.strip()
@@ -33,6 +39,7 @@ def fetch_door_status(host, username, password):
     except Exception as err:
         _LOGGER.error("Error fetching door status from %s: %s", host, err)
         raise
+
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up the sensor platform from a config entry."""
@@ -54,6 +61,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     await coordinator.async_config_entry_first_refresh()
 
     async_add_entities([IntelbrasDoorStatusSensor(coordinator, host)], True)
+
 
 class IntelbrasDoorStatusSensor(CoordinatorEntity, SensorEntity):
     """Representation of the Intelbras door status sensor."""

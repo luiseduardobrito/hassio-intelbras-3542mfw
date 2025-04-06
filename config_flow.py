@@ -29,7 +29,8 @@ class IntelbrasConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     user_input[CONF_PASSWORD],
                 )
             except Exception as err:
-                _LOGGER.error("Error connecting to device at %s: %s", user_input[CONF_HOST], err)
+                _LOGGER.error("Error connecting to device at %s: %s",
+                              user_input[CONF_HOST], err)
                 errors["base"] = "cannot_connect"
             if not errors:
                 return self.async_create_entry(title="My Sensor", data=user_input)
@@ -46,6 +47,7 @@ class IntelbrasConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_PASSWORD): str,
         })
 
+
 def fetch_data(host, username, password):
     """
     A simple synchronous function to fetch data from the API using digest authentication.
@@ -55,6 +57,12 @@ def fetch_data(host, username, password):
     from requests.auth import HTTPDigestAuth
 
     params = {}
-    response = requests.get(host, auth=HTTPDigestAuth(username, password), params=params, timeout=10)
+    response = requests.get(
+        host,
+        auth=HTTPDigestAuth(username, password),
+        params=params,
+        timeout=10,
+        verify=False
+    )
     response.raise_for_status()  # Raises an exception for HTTP errors
     return response.text
