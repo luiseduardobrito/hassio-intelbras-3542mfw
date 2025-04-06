@@ -26,7 +26,10 @@ def fetch_door_status(host, username, password):
             verify=False  # Set verify=True if you have valid SSL certificates
         )
         response.raise_for_status()
-        return response.text.strip()  # Returns the door status as a string
+        text = response.text.strip()
+        if '=' in text:
+            return text.split('=', 1)[1].strip()
+        return text
     except Exception as err:
         _LOGGER.error("Error fetching door status from %s: %s", host, err)
         raise
