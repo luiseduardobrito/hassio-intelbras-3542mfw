@@ -51,7 +51,7 @@ class IntelbrasCamera(Camera):
         """Return the RTSP stream URL."""
         return self._rtsp_url
 
-    async def async_camera_image(self):
+    async def async_camera_image(self, width: int = None, height: int = None):
         """Return a still image from the camera.
         
         In this example, we return None so that Home Assistant's built-in ffmpeg integration
