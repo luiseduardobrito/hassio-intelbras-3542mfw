@@ -18,7 +18,7 @@ def get_rtsp_url(host, username, password):
     # If host is given as http://192.168.1.123 then netloc is "192.168.1.123"
     netloc = parsed.netloc if parsed.netloc else parsed.path
     # Modify the port and stream path if needed for your device.
-    return f"rtsp://{username}:{password}@{netloc}:554/"
+    return f"rtsp://{username}:{password}@{netloc}:554?tls_verify=false"
 
 async def async_setup_entry(hass, entry, async_add_entities: AddEntitiesCallback):
     """Set up the camera platform from a config entry."""
@@ -44,6 +44,7 @@ class IntelbrasCamera(Camera):
             "name": "Intelbras 3542 MFW Camera",
             "manufacturer": "Intelbras",
         }
+        self.verify_ssl = False
         self._rtsp_url = get_rtsp_url(host, username, password)
 
     @property

@@ -34,7 +34,7 @@ def fetch_door_status(host, username, password):
         response.raise_for_status()
         text = response.text.strip()
         if '=' in text:
-            return text.split('=', 1)[1].strip()
+            return text.split('=', 1)[1].strip().lower()
         return text
     except Exception as err:
         _LOGGER.error("Error fetching door status from %s: %s", host, err)
