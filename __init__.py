@@ -2,6 +2,10 @@
 
 from .const import DOMAIN
 
+async def async_setup(hass, config):
+    """Set up the integration from YAML (not used, but required)."""
+    return True
+
 async def async_setup_entry(hass, entry):
     """Set up Intelbras 3542 MFW from a config entry."""
     hass.data.setdefault(DOMAIN, {})
