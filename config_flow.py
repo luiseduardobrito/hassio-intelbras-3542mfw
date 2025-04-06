@@ -12,7 +12,7 @@ _LOGGER.debug("Loading config_flow for %s", __name__)
 
 @config_entries.HANDLERS.register(DOMAIN)
 class IntelbrasConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for My Sensor integration."""
+    """Handle a config flow for Intelbras 3542 MF-W."""
 
     VERSION = 1
 
@@ -33,7 +33,7 @@ class IntelbrasConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                               user_input[CONF_HOST], err)
                 errors["base"] = "cannot_connect"
             if not errors:
-                return self.async_create_entry(title="My Sensor", data=user_input)
+                return self.async_create_entry(title="intelbras_3542_mfw", data=user_input)
 
         return self.async_show_form(
             step_id="user", data_schema=self._get_data_schema(), errors=errors
