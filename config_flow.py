@@ -48,11 +48,13 @@ class IntelbrasConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 def fetch_data(host, username, password):
     """
-    A simple synchronous function to fetch data from the API.
-    It uses HTTP basic authentication by passing the username and password.
+    A simple synchronous function to fetch data from the API using digest authentication.
+    It uses HTTP digest authentication by passing the username and password.
     """
     import requests
+    from requests.auth import HTTPDigestAuth
+
     params = {}
-    response = requests.get(host, auth=(username, password), params=params, timeout=10)
+    response = requests.get(host, auth=HTTPDigestAuth(username, password), params=params, timeout=10)
     response.raise_for_status()  # Raises an exception for HTTP errors
     return response.json()
