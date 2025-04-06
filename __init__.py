@@ -11,7 +11,7 @@ async def async_setup_entry(hass, entry):
     hass.data.setdefault(DOMAIN, {})
     hass.async_create_task(
         hass.config_entries.async_forward_entry_setup(entry, "sensor"),
-        hass.config_entries.async_forward_entry_setup(entry, "camer"),
+        hass.config_entries.async_forward_entry_setup(entry, "camera"),
     )
     return True
 
@@ -25,5 +25,5 @@ async def async_unload_entry(hass, entry):
 
     if unload_camera_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
-        
+
     return True
