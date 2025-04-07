@@ -18,11 +18,17 @@ async def async_setup_entry(hass, entry):
 
 async def async_unload_entry(hass, entry):
     """Unload Intelbras 3542 MFW config entry."""
-    unload_sensor_ok = await hass.config_entries.async_forward_entry_unload(entry, "sensor")
-    unload_camera_ok = await hass.config_entries.async_forward_entry_unload(entry, "camera")
-    unload_button_ok = await hass.config_entries.async_forward_entry_unload(entry, "button")
-
-    if unload_sensor_ok and unload_camera_ok and unload_button_ok:
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
+    return unload_ok
 
+async def async_migrate_entry(hass, entry):
+    """Migrate config entry to a new version."""
+    # Example migration logic
+    # if entry.version == 1:
+    #     entry.data["new_key"] = "new_value"
+    #     entry.version = 2
+    #     hass.config_entries.async_update_entry(entry)
+    # return True 
     return True
