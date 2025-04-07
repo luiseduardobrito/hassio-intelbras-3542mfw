@@ -1,84 +1,57 @@
 import logging
-from datetime import timedelta
-
-import requests
 from requests.auth import HTTPDigestAuth
-import urllib3
+import requests
 
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
+from homeassistant.components.button import ButtonEntity
+from homeassistant.helpers.entity import DeviceInfo
 
-from .const import DOMAIN, CONF_HOST, CONF_USERNAME, CONF_PASSWORD, DEFAULT_HOST
+from .const import DOMAIN, CONF_HOST, CONF_USERNAME, CONF_PASSWORD, CONF_VERIFY_SSL
 
 _LOGGER = logging.getLogger(__name__)
 
-# Disable warnings for insecure SSL requests
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-# Define how often to poll the device
-SCAN_INTERVAL = timedelta(seconds=60)
-
-
-def fetch_door_status(host, username, password):
-    """Fetch door status from the Intelbras device using HTTP Digest Authentication."""
-    url = f"{host}/cgi-bin/accessControl.cgi?action=getDoorStatus&channel=1"
-    try:
-        session = requests.Session()
-        session.verify = False  # Disable SSL certificate verification globally for this session
-        response = session.get(
-            url,
-            auth=HTTPDigestAuth(username, password),
-            stream=True,
-            timeout=20,
-        )
-        response.raise_for_status()
-        text = response.text.strip()
-        if '=' in text:
-            return text.split('=', 1)[1].strip().lower()
-        return text
-    except Exception as err:
-        _LOGGER.error("Error fetching door status from %s: %s", host, err)
-        raise
-
-
 async def async_setup_entry(hass, entry, async_add_entities):
-    """Set up the sensor platform from a config entry."""
-    host = entry.data.get(CONF_HOST, DEFAULT_HOST)
-    username = entry.data.get(CONF_USERNAME)
-    password = entry.data.get(CONF_PASSWORD)
-
-    coordinator = DataUpdateCoordinator(
-        hass,
-        _LOGGER,
-        name="Intelbras Door Status",
-        update_method=lambda: hass.async_add_executor_job(
-            fetch_door_status, host, username, password
-        ),
-        update_interval=SCAN_INTERVAL,
-    )
-
-    # Fetch initial data before adding entities.
-    await coordinator.async_config_entry_first_refresh()
-
-    async_add_entities([IntelbrasDoorStatusSensor(coordinator, host)], True)
+    """Set up the door button entity from a config entry."""
+    async_add_entities([IntelbrasDoorButton(hass, entry.data)])
 
 
-class IntelbrasDoorStatusSensor(CoordinatorEntity, SensorEntity):
-    """Representation of the Intelbras door status sensor."""
+class IntelbrasDoorButton(ButtonEntity):
+    """Representation of a door button to open the door via the device API."""
 
-    def __init__(self, coordinator, host):
-        """Initialize the sensor."""
-        super().__init__(coordinator)
-        self._attr_name = "Door Status"
-        self._attr_unique_id = f"{host}_door_status"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, host)},
-            "name": "Intelbras 3542 MFW",
-            "manufacturer": "Intelbras",
-        }
+    def __init__(self, hass, config_data):
+        """Initialize the door button."""
+        self.hass = hass
+        self._config = config_data
+        host = config_data.get(CONF_HOST)
+        self._username = config_data.get(CONF_USERNAME)
+        self._password = config_data.get(CONF_PASSWORD)
+        self._verify_ssl = config_data.get(CONF_VERIFY_SSL, False)
+        self._channel = 1  # For devices with a single door, channel is always 1.
 
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        # The coordinator.data contains the door status string returned by the API.
-        return self.coordinator.data
+        self._attr_name = "Open Door"
+        self._attr_unique_id = f"{host}_door_button"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, host)},
+            name="Intelbras 3542 MFW Door Controller",
+            manufacturer="Intelbras",
+        )
+
+    async def async_press(self) -> None:
+        """Handle the button press to open the door."""
+        # Use the host as provided (which should include the scheme)
+        host = self._config.get(CONF_HOST)
+        url = f"{host}/cgi-bin/accessControl.cgi?action=openDoor&channel={self._channel}"
+        _LOGGER.debug("Sending door open command to %s", url)
+        try:
+            # Run the synchronous HTTP request in an executor to avoid blocking.
+            await self.hass.async_add_executor_job(
+                self._send_request, url, self._username, self._password, self._verify_ssl
+            )
+        except Exception as exc:
+            _LOGGER.error("Error opening door: %s", exc)
+
+    def _send_request(self, url: str, username: str, password: str, verify_ssl: bool):
+        """Send the HTTP request to open the door."""
+        digest_auth = HTTPDigestAuth(username, password)
+        response = requests.get(url, auth=digest_auth, stream=True, timeout=20, verify=verify_ssl)
+        response.raise_for_status()
+        _LOGGER.info("Door open response: %s", response.text)
