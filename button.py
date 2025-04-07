@@ -37,7 +37,7 @@ class IntelbrasDoorButton(ButtonEntity):
     async def async_press(self) -> None:
         """Handle the button press to open the door."""
         host = self._config.get(CONF_HOST)
-        url = f"http://{host}/cgi-bin/accessControl.cgi?action=openDoor&channel={self._channel}"
+        url = f"{host}/cgi-bin/accessControl.cgi?action=openDoor&channel={self._channel}"
         _LOGGER.debug("Sending door open command to %s", url)
         try:
             # Run the synchronous HTTP request in an executor
