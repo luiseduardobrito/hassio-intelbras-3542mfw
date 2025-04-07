@@ -75,6 +75,7 @@ class IntelbrasDoorStatusSensor(CoordinatorEntity, SensorEntity):
             "identifiers": {(DOMAIN, host)},
             "name": "Intelbras 3542 MFW",
             "manufacturer": "Intelbras",
+            "configuration_url": host,
         }
 
     @property

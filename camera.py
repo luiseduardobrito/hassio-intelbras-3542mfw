@@ -3,6 +3,7 @@ from urllib.parse import urlparse, quote_plus
 
 from homeassistant.components.camera import Camera, CameraEntityFeature
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.device_registry import Conn
 
 from .const import DOMAIN, CONF_HOST, CONF_USERNAME, CONF_PASSWORD, DEFAULT_HOST, CONF_VERIFY_SSL
 
@@ -51,6 +52,7 @@ class IntelbrasCamera(Camera):
             "identifiers": {(DOMAIN, host)},
             "name": "Intelbras 3542 MFW Camera",
             "manufacturer": "Intelbras",
+            "configuration_url": host,
         }
 
         # Build the RTSP URL with proper credentials and protocol.
