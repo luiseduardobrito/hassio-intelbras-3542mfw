@@ -60,9 +60,9 @@ class IntelbrasCamera(Camera):
         self._attr_supported_features = CameraEntityFeature.STREAM
 
         # Configure ffmpeg stream options: disable TLS verification if verify_ssl is False.
-        self.stream_options = {}
-        if not verify_ssl:
-            self.stream_options["-tls_verify"] = "0"
+        # self.stream_options = {}
+        # if not verify_ssl:
+        #     self.stream_options["-tls_verify"] = "0"
 
     async def stream_source(self) -> str:
         """Return the RTSP stream URL."""
