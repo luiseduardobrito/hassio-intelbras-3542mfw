@@ -78,3 +78,7 @@ class IntelbrasCamera(Camera):
         the stream_source for live viewing.
         """
         return None
+
+    def use_stream_for_stills(self) -> bool:
+        """Whether or not to use stream to generate stills."""
+        return True
