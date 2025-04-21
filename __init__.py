@@ -1,6 +1,8 @@
 """The Intelbras 3542 MFW integration."""
 
 import json
+
+import logging
 from .const import DOMAIN
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -8,6 +10,10 @@ from homeassistant.components.webhook import async_register as async_register_we
 
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.CAMERA, Platform.BUTTON]
+
+
+# Set up a logger for your custom component
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup(hass, config):
@@ -38,14 +44,14 @@ async def handle_webhook_event(hass: HomeAssistant, webhook_id: str, request):
         payload = json.loads(json_str)
 
         # Log the payload for debugging
-        # hass.logger.info(f"Received webhook payload: {json.dumps(payload)}")
+        _LOGGER.info(f"Received webhook payload: {json.dumps(payload)}")
 
         # Fire a custom event with the payload data
         hass.bus.async_fire("intelbras_3542_mfw_webhook", payload)
 
     except Exception as e:
         # Log any errors that occur during processing
-        hass.logger.error(f"Error processing webhook event: {e}")
+        _LOGGER.error(f"Error processing webhook event: {e}")
 
 
 async def async_setup_entry(hass, entry):
