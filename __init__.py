@@ -4,10 +4,11 @@ import json
 from .const import DOMAIN
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.components.webhook import async_register as async_register_webhook 
+from homeassistant.components.webhook import async_register as async_register_webhook
 
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.CAMERA, Platform.BUTTON]
+
 
 async def async_setup(hass, config):
     """Set up the integration from YAML (not used, but required)."""
@@ -25,31 +26,34 @@ async def async_setup(hass, config):
 async def handle_webhook_event(hass: HomeAssistant, webhook_id: str, request):
     """Handle the incoming webhook event."""
     try:
-        # Attempt to parse JSON
-        payload = await request.json()
-    except Exception:
-        # If JSON parsing fails, attempt to parse as plain text
+        # Read the raw request body
         raw_data = await request.text()
-        try:
-            # Extract JSON string from the 'info' field
-            start = raw_data.find('{"')  # Find the start of the JSON string
-            end = raw_data.rfind('}') + 1  # Find the end of the JSON string
-            json_str = raw_data[start:end]  # Extract the JSON substring
-            payload = json.loads(json_str)  # Parse the JSON string
-        except json.JSONDecodeError as e:
-            # Log and handle the error if JSON parsing fails
-            hass.logger.error(f"Failed to decode JSON: {e}")
-            return
-    # Log the payload for debugging
-    hass.logger.info(f"Received webhook payload: {json.dumps(payload)}")
-    # Fire a custom event with the payload data
-    hass.bus.async_fire("intelbras_3542_mfw_webhook", payload)
+
+        # Find the JSON data within the 'info' part
+        start = raw_data.find('{"')  # Find the start of the JSON string
+        end = raw_data.rfind('}') + 1  # Find the end of the JSON string
+        json_str = raw_data[start:end]  # Extract the JSON substring
+
+        # Parse the JSON string
+        payload = json.loads(json_str)
+
+        # Log the payload for debugging
+        hass.logger.info(f"Received webhook payload: {json.dumps(payload)}")
+
+        # Fire a custom event with the payload data
+        hass.bus.async_fire("intelbras_3542_mfw_webhook", payload)
+
+    except Exception as e:
+        # Log any errors that occur during processing
+        hass.logger.error(f"Error processing webhook event: {e}")
+
 
 async def async_setup_entry(hass, entry):
     """Set up Intelbras 3542 MFW from a config entry."""
     hass.data.setdefault(DOMAIN, {})
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
 
 async def async_unload_entry(hass, entry):
     """Unload Intelbras 3542 MFW config entry."""
@@ -58,6 +62,7 @@ async def async_unload_entry(hass, entry):
         hass.data[DOMAIN].pop(entry.entry_id)
     return unload_ok
 
+
 async def async_migrate_entry(hass, entry):
     """Migrate config entry to a new version."""
     # Example migration logic
@@ -65,5 +70,5 @@ async def async_migrate_entry(hass, entry):
     #     entry.data["new_key"] = "new_value"
     #     entry.version = 2
     #     hass.config_entries.async_update_entry(entry)
-    # return True 
+    # return True
     return True
