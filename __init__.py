@@ -38,7 +38,7 @@ async def handle_webhook_event(hass: HomeAssistant, webhook_id: str, request):
         payload = json.loads(json_str)
 
         # Log the payload for debugging
-        hass.logger.info(f"Received webhook payload: {json.dumps(payload)}")
+        # hass.logger.info(f"Received webhook payload: {json.dumps(payload)}")
 
         # Fire a custom event with the payload data
         hass.bus.async_fire("intelbras_3542_mfw_webhook", payload)
