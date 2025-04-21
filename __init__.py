@@ -38,8 +38,8 @@ async def handle_webhook_event(hass: HomeAssistant, webhook_id: str, request):
         _LOGGER.debug(f"Raw webhook data: {raw_data}")
 
         # Find the JSON data within the 'info' part
-        start = raw_data.find('{"')  # Find the start of the JSON string
-        end = raw_data.rfind('}')  # Find the end of the JSON string
+        start = raw_data.find('{')  # Find the start of the JSON string
+        end = raw_data.rfind('}') + 1  # Find the end of the JSON string
         json_str = raw_data[start:end]  # Extract the JSON substring
 
         _LOGGER.debug(f"Extracted JSON string: {json_str}")
