@@ -13,9 +13,11 @@ async def async_setup(hass, config):
     """Set up the integration from YAML (not used, but required)."""
     webhook_id = "intelbras_3542_mfw_webhook"
     async_register_webhook(
-        hass,
-        webhook_id,
-        handle_webhook_event,
+        hass=hass,
+        domain=DOMAIN,
+        name="Intelbras 3542 MFW Webhook",
+        webhook_id=webhook_id,
+        handler=handle_webhook_event,
     )
     return True
 
