@@ -37,21 +37,27 @@ async def handle_webhook_event(hass: HomeAssistant, webhook_id: str, request):
 
         _LOGGER.debug(f"Raw webhook data: {raw_data}")
 
-        # Find the JSON data within the 'info' part
-        start = raw_data.find('{"')  # Find the start of the JSON string
-        end = raw_data.rfind('}') + 1  # Find the end of the JSON string
-        json_str = raw_data[start:end]  # Extract the JSON substring
+        # Find the JSON data inside the 'info' part (after boundary)
+        # Find the part with name="info"
+        start = raw_data.find('Content-Disposition: form-data; name="info"')
+        if start != -1:
+            # Extract the portion after 'info' and before the boundary at the end
+            start_info = raw_data.find("{", start)
+            end_info = raw_data.rfind("}", start)
+            json_str = raw_data[start_info:end_info + 1]
 
-        _LOGGER.debug(f"Extracted JSON string: {json_str}")
+            _LOGGER.debug(f"Extracted JSON string: {json_str}")
 
-        # Parse the JSON string
-        payload = json.loads(json_str)
+            # Parse the JSON string
+            payload = json.loads(json_str)
 
-        # Log the payload for debugging
-        _LOGGER.info(f"Received webhook payload: {json.dumps(payload)}")
+            # Log the payload for debugging
+            _LOGGER.info(f"Received webhook payload: {json.dumps(payload)}")
 
-        # Fire a custom event with the payload data
-        hass.bus.async_fire("intelbras_3542_mfw_webhook", payload)
+            # Fire a custom event with the payload data
+            hass.bus.async_fire("intelbras_3542_mfw_webhook", payload)
+        else:
+            _LOGGER.error("Error: Could not find 'info' in the request body.")
 
     except Exception as e:
         # Log any errors that occur during processing
