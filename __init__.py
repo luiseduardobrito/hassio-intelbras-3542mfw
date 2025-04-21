@@ -21,10 +21,26 @@ async def async_setup(hass, config):
     )
     return True
 
+
 async def handle_webhook_event(hass: HomeAssistant, webhook_id: str, request):
     """Handle the incoming webhook event."""
-    payload = await request.json()
-    # Optionally, log the payload for debugging
+    try:
+        # Attempt to parse JSON
+        payload = await request.json()
+    except Exception:
+        # If JSON parsing fails, attempt to parse as plain text
+        raw_data = await request.text()
+        try:
+            # Extract JSON string from the 'info' field
+            start = raw_data.find('{"')  # Find the start of the JSON string
+            end = raw_data.rfind('}') + 1  # Find the end of the JSON string
+            json_str = raw_data[start:end]  # Extract the JSON substring
+            payload = json.loads(json_str)  # Parse the JSON string
+        except json.JSONDecodeError as e:
+            # Log and handle the error if JSON parsing fails
+            hass.logger.error(f"Failed to decode JSON: {e}")
+            return
+    # Log the payload for debugging
     hass.logger.info(f"Received webhook payload: {json.dumps(payload)}")
     # Fire a custom event with the payload data
     hass.bus.async_fire("intelbras_3542_mfw_webhook", payload)
