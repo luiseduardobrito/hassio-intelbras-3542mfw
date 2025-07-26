@@ -3,7 +3,16 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_USERNAME, CONF_PASSWORD
 
-from .const import DOMAIN, DEFAULT_HOST, CONF_HOST, CONF_USERNAME, CONF_PASSWORD, CONF_VERIFY_SSL
+from .const import (
+    DOMAIN, 
+    DEFAULT_HOST, 
+    CONF_HOST, 
+    CONF_USERNAME, 
+    CONF_PASSWORD, 
+    CONF_VERIFY_SSL,
+    CONF_EVENT_SCAN_INTERVAL,
+    DEFAULT_EVENT_SCAN_INTERVAL
+)
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.debug("Loading config_flow for %s", __name__)
@@ -46,6 +55,7 @@ class IntelbrasConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_USERNAME): str,
             vol.Required(CONF_PASSWORD): str,
             vol.Optional(CONF_VERIFY_SSL, default=False): bool,
+            vol.Optional(CONF_EVENT_SCAN_INTERVAL, default=DEFAULT_EVENT_SCAN_INTERVAL): vol.All(vol.Coerce(int), vol.Range(min=5, max=300)),
         })
 
 

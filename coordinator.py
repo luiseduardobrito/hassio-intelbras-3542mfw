@@ -12,16 +12,20 @@ from homeassistant.helpers.update_coordinator import (
 from homeassistant.helpers import device_registry as dr
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_EVENT_SCAN_INTERVAL, DEFAULT_EVENT_SCAN_INTERVAL
 from .event_parser import IntelbrasEventParser
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class IntelbrasEventsCoordinator(DataUpdateCoordinator):
     """Coordinator for Intelbras events."""
 
     def __init__(self, hass: HomeAssistant, config_entry, client):
         """Initialize the coordinator."""
+        # Get scan interval from config entry or use default
+        scan_interval = config_entry.data.get(CONF_EVENT_SCAN_INTERVAL, DEFAULT_EVENT_SCAN_INTERVAL)
+        
         super().__init__(
             hass,
             _LOGGER,
@@ -29,7 +33,7 @@ class IntelbrasEventsCoordinator(DataUpdateCoordinator):
             name="Intelbras events",
             config_entry=config_entry,
             # Polling interval. Will only be polled if there are subscribers.
-            update_interval=timedelta(seconds=30),
+            update_interval=timedelta(seconds=scan_interval),
             # Set always_update to `False` if the data returned from the
             # api can be compared via `__eq__` to avoid duplicate updates
             # being dispatched to listeners
