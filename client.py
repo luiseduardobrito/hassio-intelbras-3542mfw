@@ -5,7 +5,7 @@ from typing import Optional
 import urllib3
 import time
 
-from event_parser import IntelbrasEventParser
+from .event_parser import IntelbrasEventParser
 
 # Disable warnings for insecure SSL requests
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
