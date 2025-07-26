@@ -60,8 +60,8 @@ class IntelbrasDoorStatusSensor(CoordinatorEntity, SensorEntity):
             for event in events:
                 # TODO: This is just a placeholder, we need to get the door status from the device
                 if event["Type"] == "Entry":
-                    return "Open"
-        return "Closed"
+                    return "open"
+        return "closed"
 
 
 class IntelbrasEventsCountSensor(CoordinatorEntity, SensorEntity):
