@@ -1,44 +1,16 @@
 import logging
 from datetime import timedelta
 
-import requests
-from requests.auth import HTTPDigestAuth
-import urllib3
-
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
 
-from .const import DOMAIN, CONF_HOST, CONF_USERNAME, CONF_PASSWORD, DEFAULT_HOST
+from .const import DOMAIN, CONF_HOST, CONF_USERNAME, CONF_PASSWORD, CONF_VERIFY_SSL, DEFAULT_HOST
+from .client import IntelbrasClient
 
 _LOGGER = logging.getLogger(__name__)
 
-# Disable warnings for insecure SSL requests
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 # Define how often to poll the device
 SCAN_INTERVAL = timedelta(seconds=60)
-
-
-def fetch_door_status(host, username, password):
-    """Fetch door status from the Intelbras device using HTTP Digest Authentication."""
-    url = f"{host}/cgi-bin/accessControl.cgi?action=getDoorStatus&channel=1"
-    try:
-        session = requests.Session()
-        session.verify = False  # Disable SSL certificate verification globally for this session
-        response = session.get(
-            url,
-            auth=HTTPDigestAuth(username, password),
-            stream=True,
-            timeout=20,
-        )
-        response.raise_for_status()
-        text = response.text.strip()
-        if '=' in text:
-            return text.split('=', 1)[1].strip().lower()
-        return text
-    except Exception as err:
-        _LOGGER.error("Error fetching door status from %s: %s", host, err)
-        raise
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -46,13 +18,17 @@ async def async_setup_entry(hass, entry, async_add_entities):
     host = entry.data.get(CONF_HOST, DEFAULT_HOST)
     username = entry.data.get(CONF_USERNAME)
     password = entry.data.get(CONF_PASSWORD)
+    verify_ssl = entry.data.get(CONF_VERIFY_SSL, False)
+
+    # Create the client instance
+    client = IntelbrasClient(host, username, password, verify_ssl)
 
     coordinator = DataUpdateCoordinator(
         hass,
         _LOGGER,
         name="Intelbras Door Status",
         update_method=lambda: hass.async_add_executor_job(
-            fetch_door_status, host, username, password
+            client.get_door_status, 1
         ),
         update_interval=SCAN_INTERVAL,
     )
