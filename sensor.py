@@ -13,15 +13,15 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, 
-    entry: ConfigEntry, 
+    hass: HomeAssistant,
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up the sensor platform from a config entry."""
     # Get the coordinator from hass.data
     coordinator_data = hass.data[DOMAIN][entry.entry_id]
     coordinator = coordinator_data["coordinator"]
-    
+
     host = entry.data.get(CONF_HOST, DEFAULT_HOST)
 
     # Create sensor entities using the coordinator
@@ -30,7 +30,7 @@ async def async_setup_entry(
         IntelbrasEventsCountSensor(coordinator, host),
         IntelbrasLastEventSensor(coordinator, host)
     ]
-    
+
     async_add_entities(entities, True)
 
 
@@ -52,10 +52,16 @@ class IntelbrasDoorStatusSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
-        # This sensor would need to be adapted based on your actual door status API
-        # For now, returning a placeholder
-        return "Unknown"
+        """Return the number of events."""
+        # We we have an event Type = Entry in the last update, we set it to open
+        # Else we set it to closed
+        events = self.coordinator.get_latest_events()
+        if events:
+            for event in events:
+                # TODO: This is just a placeholder, we need to get the door status from the device
+                if event["Type"] == "Entry":
+                    return "Open"
+        return "Closed"
 
 
 class IntelbrasEventsCountSensor(CoordinatorEntity, SensorEntity):
