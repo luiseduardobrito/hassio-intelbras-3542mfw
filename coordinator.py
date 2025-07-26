@@ -94,8 +94,8 @@ class IntelbrasEventsCoordinator(DataUpdateCoordinator):
                 # Get current timestamp
                 current_time = int(time.time())
                 
-                # Fetch raw events from the API
-                raw_events = self.client.get_events(self.last_updated, current_time)
+                # Fetch raw events from the API (now async)
+                raw_events = await self.client.get_events(self.last_updated, current_time)
                 
                 # Parse the events using the event parser
                 parsed_events = []

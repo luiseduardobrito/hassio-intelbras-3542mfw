@@ -336,3 +336,71 @@ For issues with event parsing:
 1. Check the raw event data in the logs
 2. Verify the event parser is handling your device's event format
 3. Consider adjusting the event signature fields in the coordinator if needed
+
+## Performance and Compatibility
+
+### Async Architecture
+
+This integration uses a fully asynchronous architecture that is compatible with Home Assistant's event loop:
+
+- **Async HTTP Client**: Uses `aiohttp` instead of `requests` to prevent blocking operations
+- **Event Loop Compatibility**: All I/O operations are non-blocking and integrate properly with Home Assistant
+- **Flexible Authentication**: Supports both Basic and Digest authentication methods
+
+### Authentication
+
+This integration properly supports **HTTP Digest Authentication**, which is required by most Intelbras 3542 MFW devices:
+
+- **HTTP Digest Authentication**: Full implementation following RFC 2617 specifications
+- **Automatic Challenge Handling**: The integration automatically handles the digest challenge-response process
+- **MD5 Algorithm Support**: Compatible with standard MD5-based digest authentication
+- **Quality of Protection (qop)**: Supports both with and without qop directives
+
+**Important**: Intelbras devices typically require Digest authentication and do not support Basic authentication. The integration is specifically designed for this requirement.
+
+### Authentication Flow
+
+1. **Initial Request**: Makes an unauthenticated request to get the digest challenge
+2. **Challenge Parsing**: Extracts realm, nonce, qop, and other parameters from WWW-Authenticate header
+3. **Response Calculation**: Computes the proper digest response using MD5 hashing
+4. **Authenticated Request**: Makes the actual request with the Authorization header
+
+If you encounter authentication issues, verify:
+- Your username and password are correct
+- The device is configured for Digest authentication (default for Intelbras)
+- Network connectivity between Home Assistant and the device
+
+### Troubleshooting
+
+If events are not firing:
+
+1. Check that the coordinator is properly initialized in the logs
+2. Verify your device credentials are correct
+3. Ensure the device is accessible from Home Assistant
+4. Check the polling interval (default 30 seconds)
+5. Enable debug logging to see detailed event processing
+
+For issues with event parsing:
+1. Check the raw event data in the logs
+2. Verify the event parser is handling your device's event format
+3. Consider adjusting the event signature fields in the coordinator if needed
+
+### Performance Issues
+
+If you previously encountered "blocking call" warnings, this version resolves them by:
+
+- Converting all HTTP requests to async operations
+- Using `aiohttp` instead of synchronous libraries
+- Proper integration with Home Assistant's event loop
+- No more `async_add_executor_job()` calls for HTTP operations
+
+### Debug Logging
+
+To enable comprehensive debug logging:
+
+```yaml
+logger:
+  logs:
+    custom_components.intelbras_3542mfw: debug
+    aiohttp.client: info  # For HTTP request debugging
+```

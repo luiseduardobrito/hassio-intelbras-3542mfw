@@ -3,7 +3,7 @@
   "name": "Intelbras 3542 MF-W",
   "codeowners": [],
   "dependencies": [],
-  "documentation": "https://github.com/luiseduardobrito/hassio-intelbras_3542mfw",
+  "documentation": "https://github.com/luiseduardobrito/hassio-intelbras-3542mfw",
   "iot_class": "local_polling",
   "requirements": [],
   "version": "0.1.1",
