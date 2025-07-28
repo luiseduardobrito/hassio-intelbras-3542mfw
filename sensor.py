@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -95,7 +96,7 @@ class IntelbrasEventsCountSensor(CoordinatorEntity, SensorEntity):
         }
 
 
-class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity):
+class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity, RestoreEntity):
     """Sensor showing details of the most recent event."""
 
     def __init__(self, coordinator, host):
@@ -104,6 +105,7 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity):
         self._attr_name = "Last Event"
         self._attr_unique_id = f"{host}_last_event"
         self._attr_icon = "mdi:history"
+        self._last_known_state = None  # Store the last known state
         self._attr_device_info = {
             "identifiers": {(DOMAIN, host)},
             "name": "Intelbras 3542 MFW",
@@ -112,6 +114,16 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity):
             "configuration_url": host,
         }
 
+    async def async_added_to_hass(self) -> None:
+        """Restore last state after restart."""
+        await super().async_added_to_hass()
+        
+        # Restore the previous state if available
+        last_state = await self.async_get_last_state()
+        if last_state is not None and last_state.state != "unknown":
+            self._last_known_state = last_state.state
+            _LOGGER.debug(f"Restored last known state: {self._last_known_state}")
+
     @property
     def state(self):
         """Return the timestamp of the last event."""
@@ -119,8 +131,13 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity):
         if events:
             # Return the CreateTime of the most recent event
             last_event = events[-1]
-            return last_event.get("CreateTime", "Unknown")
-        return "No events"
+            new_state = last_event.get("CreateTime", "Unknown")
+            # Update our stored state
+            self._last_known_state = new_state
+            return new_state
+
+        # Return the last known state if no new events are available
+        return self._last_known_state
 
     @property
     def extra_state_attributes(self):

@@ -211,4 +211,10 @@ class IntelbrasClient:
         except Exception as e:
             _LOGGER.error("Connection test failed: %s", e)
             return False 
-        
+    
+    async def download_file(self, file_name: str) -> str:
+        """Download a file from the device."""
+        endpoint = f"cgi-bin/FileManager.cgi?action=download&fileName={file_name}"
+        response_text = await self._make_request(endpoint)
+        _LOGGER.debug("Downloaded file: %s", response_text)
+        return response_text
