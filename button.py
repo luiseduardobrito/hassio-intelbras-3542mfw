@@ -18,20 +18,22 @@ async def async_setup_entry(
     """Set up the door button entity from a config entry."""
     # Get the client from hass.data
     coordinator_data = hass.data[DOMAIN][entry.entry_id]
+    coordinator = coordinator_data["coordinator"]
     client = coordinator_data["client"]
     
     host = entry.data.get(CONF_HOST)
     
-    async_add_entities([IntelbrasDoorButton(client, host)])
+    async_add_entities([IntelbrasDoorButton(coordinator, client, host)])
 
 
 class IntelbrasDoorButton(ButtonEntity):
     """Representation of a door button to open the door via the device API."""
 
-    def __init__(self, client, host):
+    def __init__(self, coordinator, client, host):
         """Initialize the door button."""
         self._client = client
         self._host = host
+        self._coordinator = coordinator
         self._channel = 1  # For devices with a single door, channel is always 1.
 
         self._attr_name = "Open Door"
@@ -51,6 +53,9 @@ class IntelbrasDoorButton(ButtonEntity):
             # Use the async client method directly
             response = await self._client.open_door(self._channel)
             _LOGGER.info("Door opened successfully: %s", response)
+
+            # Refresh the coordinator data
+            await self._coordinator.async_refresh()
         except Exception as exc:
             _LOGGER.error("Error opening door: %s", exc)
             raise
