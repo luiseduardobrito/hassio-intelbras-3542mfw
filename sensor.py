@@ -71,7 +71,7 @@ class IntelbrasDoorStatusSensor(CoordinatorEntity, SensorEntity):
         # Fast return if the door status is open
         if door_status == "open":
             return "open"
-        
+
         # If the door status is not open, we check if we have an event Type = Entry in the last update
         # as the door status can be changed too fast for the coordinator to detect it,
         # so we get events in defined intervals, if a door was opened and closed in the last interval we set it manually as open.
@@ -113,37 +113,6 @@ class IntelbrasDoorEntryMethodSensor(CoordinatorEntity, SensorEntity):
                 if event["Type"] == "Entry" and event["ErrorCode"] == 0:
                     return ENTRY_METHOD_LABELS.get(event["Method"], "unknown")
         return "unknown"
-
-
-class IntelbrasEventsCountSensor(CoordinatorEntity, SensorEntity):
-    """Sensor showing the count of events from the coordinator."""
-
-    def __init__(self, coordinator, host):
-        """Initialize the sensor."""
-        super().__init__(coordinator)
-        self._attr_name = "Events Count"
-        self._attr_unique_id = f"{host}_events_count"
-        self._attr_icon = "mdi:counter"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, host)},
-            "name": "Intelbras 3542 MFW",
-            "manufacturer": "Intelbras",
-            "model": "3542 MFW",
-            "configuration_url": host,
-        }
-
-    @property
-    def state(self):
-        """Return the number of events."""
-        return self.coordinator.get_event_count()
-
-    @property
-    def extra_state_attributes(self):
-        """Return additional state attributes."""
-        return {
-            "last_updated": self.coordinator.data.get("last_updated") if self.coordinator.data else None,
-            "total_events": self.coordinator.get_event_count()
-        }
 
 
 class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity, RestoreEntity):
