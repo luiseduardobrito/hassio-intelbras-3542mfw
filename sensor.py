@@ -13,8 +13,8 @@ from .const import DOMAIN, CONF_HOST, DEFAULT_HOST
 _LOGGER = logging.getLogger(__name__)
 
 ENTRY_METHOD_LABELS = {
-    "4": "remote",
-    "5": "button",
+    4: "remote",
+    5: "button",
 }
 
 async def async_setup_entry(
