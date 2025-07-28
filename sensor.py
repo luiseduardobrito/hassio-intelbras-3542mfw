@@ -33,7 +33,6 @@ async def async_setup_entry(
     # Create sensor entities using the coordinator
     entities = [
         IntelbrasDoorStatusSensor(coordinator, host),
-        IntelbrasEventsCountSensor(coordinator, host),
         IntelbrasLastEventSensor(coordinator, host),
         IntelbrasDoorEntryMethodSensor(coordinator, host)
     ]
