@@ -48,6 +48,7 @@ class IntelbrasDoorStatusSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._attr_name = "Door Status"
         self._attr_unique_id = f"{host}_door_status"
+        self._attr_icon = "mdi:door-closed-lock"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, host)},
             "name": "Intelbras 3542 MFW",
