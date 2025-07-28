@@ -137,10 +137,10 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity, RestoreEntity):
             # Update our stored state
             self._last_known_state = new_state
             self._last_known_event = {
-                "method": last_event.get("Method"),
+                "method": ENTRY_METHOD_LABELS.get(last_event.get("Method"), "unknown"),
                 "user_id": last_event.get("UserID"),
                 "door": last_event.get("Door"),
-                "status": last_event.get("Status"),
+                "status": last_event.get("Status") == 1,
             }
             return new_state
 
