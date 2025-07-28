@@ -110,7 +110,6 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity, RestoreEntity):
         self._attr_unique_id = f"{host}_last_event"
         self._attr_icon = "mdi:history"
         self._last_known_state = None  # Store the last known state
-        self._last_known_event = None  # Store the last known event
         self._attr_device_info = {
             "identifiers": {(DOMAIN, host)},
             "name": "Intelbras 3542 MFW",
