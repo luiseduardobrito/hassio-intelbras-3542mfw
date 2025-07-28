@@ -123,12 +123,19 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity, RestoreEntity):
         """Restore last state after restart."""
         await super().async_added_to_hass()
 
-        # Restore the previous state if available
+        # Restore the previous timestamp state if available
         last_state = await self.async_get_last_state()
         if last_state is not None and last_state.state != "unknown":
             self._last_known_state = last_state.state
             _LOGGER.debug(
                 f"Restored last known state: {self._last_known_state}")
+
+        # Restore the previous event state if available
+        last_event = await self.async_get_last_state()
+        if last_event is not None and last_event.state != "unknown":
+            self._last_known_event = last_event.state
+            _LOGGER.debug(
+                f"Restored last known event: {self._last_known_event}")
 
     @property
     def state(self):
