@@ -43,6 +43,7 @@ class IntelbrasEventsCoordinator(DataUpdateCoordinator):
         self.config_entry = config_entry
         self.event_parser = IntelbrasEventParser(strict_mode=False)
         self.last_events: List[Dict[str, Any]] = []
+        self.last_door_status = None
         self.device_id = None
 
     async def _async_setup(self):
@@ -112,6 +113,11 @@ class IntelbrasEventsCoordinator(DataUpdateCoordinator):
                         parsed_events = []
                 elif isinstance(raw_events, list):
                     parsed_events = raw_events
+
+                raw_door_status = await self.client.get_door_status()
+
+                if raw_door_status and isinstance(raw_door_status, str):
+                    self.last_door_status = raw_door_status
                 
                 # Fire events for new records
                 await self._async_fire_new_events(parsed_events)
@@ -123,7 +129,8 @@ class IntelbrasEventsCoordinator(DataUpdateCoordinator):
                 return {
                     "events": parsed_events,
                     "last_updated": current_time,
-                    "total_events": len(parsed_events)
+                    "total_events": len(parsed_events),
+                    "door_status": self.last_door_status
                 }
                 
         except Exception as err:
@@ -181,6 +188,12 @@ class IntelbrasEventsCoordinator(DataUpdateCoordinator):
             f"{DOMAIN}_event",  # Event type: intelbras_3542mfw_event
             event_payload
         )
+
+    def get_door_status(self) -> str:
+        """Get the door status from the coordinator data."""
+        if self.data and isinstance(self.data, dict):
+            return self.data.get("door_status", "unknown")
+        return "unknown"
 
     def get_latest_events(self) -> List[Dict[str, Any]]:
         """Get the latest events from the coordinator data."""

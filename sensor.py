@@ -17,6 +17,7 @@ ENTRY_METHOD_LABELS = {
     5: "button",
 }
 
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -59,15 +60,31 @@ class IntelbrasDoorStatusSensor(CoordinatorEntity, SensorEntity):
     @property
     def state(self):
         """Return the door status."""
-        # We we have an event Type = Entry in the last update, we set it to open
-        # Else we set it to closed
+        # This state is a little tricky, we need to get the door status from the coordinator
+        # first we check if the door status is in the coordinator data is open
+        # if it is, we return open
+        # if it is not, we check if we have an event Type = Entry in the last update
+        # if we have an event Type = Entry in the last update, we return open
+        # else we return closed
+        door_status = self.coordinator.get_door_status()
+
+        # Fast return if the door status is open
+        if door_status == "open":
+            return "open"
+        
+        # If the door status is not open, we check if we have an event Type = Entry in the last update
+        # as the door status can be changed too fast for the coordinator to detect it,
+        # so we get events in defined intervals, if a door was opened and closed in the last interval we set it manually as open.
         events = self.coordinator.get_latest_events()
+
         if events:
             for event in events:
-                # TODO: This is just a placeholder, we need to get the door status from the device
-                if event["Type"] == "Entry" and event["ErrorCode"] == 0:  
+                if event["Type"] == "Entry" and event["ErrorCode"] == 0:
                     return "open"
+
+        # If no status and no events in last update, we return closed
         return "closed"
+
 
 class IntelbrasDoorEntryMethodSensor(CoordinatorEntity, SensorEntity):
     """Representation of the Intelbras door entry method sensor."""
@@ -93,7 +110,7 @@ class IntelbrasDoorEntryMethodSensor(CoordinatorEntity, SensorEntity):
         if events:
             for event in events:
                 # We only show the entry method if the event is an entry and the error code is 0
-                if event["Type"] == "Entry" and event["ErrorCode"] == 0:  
+                if event["Type"] == "Entry" and event["ErrorCode"] == 0:
                     return ENTRY_METHOD_LABELS.get(event["Method"], "unknown")
         return "unknown"
 
