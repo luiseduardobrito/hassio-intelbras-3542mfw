@@ -130,13 +130,6 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity, RestoreEntity):
             _LOGGER.debug(
                 f"Restored last known state: {self._last_known_state}")
 
-        # Restore the previous event state if available
-        last_event = await self.async_get_last_state()
-        if last_event is not None and last_event.state != "unknown":
-            self._last_known_event = last_event.state
-            _LOGGER.debug(
-                f"Restored last known event: {self._last_known_event}")
-
     @property
     def state(self):
         """Return the timestamp of the last event."""
@@ -147,18 +140,7 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity, RestoreEntity):
             new_state = last_event.get("CreateTime", "Unknown")
             # Update our stored state
             self._last_known_state = new_state
-            self._last_known_event = {
-                "method": ENTRY_METHOD_LABELS.get(last_event.get("Method"), "unknown"),
-                "user_id": last_event.get("UserID"),
-                "door": last_event.get("Door"),
-                "status": last_event.get("Status") == 1,
-            }
             return new_state
 
         # Return the last known state if no new events are available
         return self._last_known_state
-
-    @property
-    def extra_state_attributes(self):
-        """Return the some details of the last event."""
-        return self._last_known_event
