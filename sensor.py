@@ -106,6 +106,7 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity, RestoreEntity):
         self._attr_unique_id = f"{host}_last_event"
         self._attr_icon = "mdi:history"
         self._last_known_state = None  # Store the last known state
+        self._last_known_event = None  # Store the last known event
         self._attr_device_info = {
             "identifiers": {(DOMAIN, host)},
             "name": "Intelbras 3542 MFW",
@@ -117,12 +118,13 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity, RestoreEntity):
     async def async_added_to_hass(self) -> None:
         """Restore last state after restart."""
         await super().async_added_to_hass()
-        
+
         # Restore the previous state if available
         last_state = await self.async_get_last_state()
         if last_state is not None and last_state.state != "unknown":
             self._last_known_state = last_state.state
-            _LOGGER.debug(f"Restored last known state: {self._last_known_state}")
+            _LOGGER.debug(
+                f"Restored last known state: {self._last_known_state}")
 
     @property
     def state(self):
@@ -134,6 +136,12 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity, RestoreEntity):
             new_state = last_event.get("CreateTime", "Unknown")
             # Update our stored state
             self._last_known_state = new_state
+            self._last_known_event = {
+                "method": last_event.get("Method"),
+                "user_id": last_event.get("UserID"),
+                "door": last_event.get("Door"),
+                "status": last_event.get("Status"),
+            }
             return new_state
 
         # Return the last known state if no new events are available
@@ -141,20 +149,5 @@ class IntelbrasLastEventSensor(CoordinatorEntity, SensorEntity, RestoreEntity):
 
     @property
     def extra_state_attributes(self):
-        """Return the full details of the last event."""
-        events = self.coordinator.get_latest_events()
-        if events:
-            last_event = events[-1]
-            # Return all event data as attributes for easy access
-            return {
-                "event_data": last_event,
-                "door": last_event.get("Door"),
-                "method": last_event.get("Method"),
-                "user_id": last_event.get("UserID"),
-                "status": last_event.get("Status"),
-                "total_events": len(events)
-            }
-        return {
-            "event_data": None,
-            "total_events": 0
-        }
+        """Return the some details of the last event."""
+        return self._last_known_event
