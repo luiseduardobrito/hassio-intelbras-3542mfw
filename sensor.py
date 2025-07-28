@@ -33,7 +33,8 @@ async def async_setup_entry(
     entities = [
         IntelbrasDoorStatusSensor(coordinator, host),
         IntelbrasEventsCountSensor(coordinator, host),
-        IntelbrasLastEventSensor(coordinator, host)
+        IntelbrasLastEventSensor(coordinator, host),
+        IntelbrasDoorEntryMethodSensor(coordinator, host)
     ]
 
     async_add_entities(entities, True)
@@ -57,16 +58,44 @@ class IntelbrasDoorStatusSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def state(self):
-        """Return the number of events."""
+        """Return the door status."""
         # We we have an event Type = Entry in the last update, we set it to open
         # Else we set it to closed
         events = self.coordinator.get_latest_events()
         if events:
             for event in events:
                 # TODO: This is just a placeholder, we need to get the door status from the device
-                if event["Type"] == "Entry":
+                if event["Type"] == "Entry" and event["ErrorCode"] == 0:  
                     return "open"
         return "closed"
+
+class IntelbrasDoorEntryMethodSensor(CoordinatorEntity, SensorEntity):
+    """Representation of the Intelbras door entry method sensor."""
+
+    def __init__(self, coordinator, host):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_name = "Door Entry Method"
+        self._attr_unique_id = f"{host}_door_entry_method"
+        self._attr_icon = "mdi:lock-open-alert"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, host)},
+            "name": "Intelbras 3542 MFW",
+            "manufacturer": "Intelbras",
+            "model": "3542 MFW",
+            "configuration_url": host,
+        }
+
+    @property
+    def state(self):
+        """Return the door entry method."""
+        events = self.coordinator.get_latest_events()
+        if events:
+            for event in events:
+                # We only show the entry method if the event is an entry and the error code is 0
+                if event["Type"] == "Entry" and event["ErrorCode"] == 0:  
+                    return ENTRY_METHOD_LABELS.get(event["Method"], "unknown")
+        return "unknown"
 
 
 class IntelbrasEventsCountSensor(CoordinatorEntity, SensorEntity):
